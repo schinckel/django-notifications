@@ -4,6 +4,6 @@ from django.contrib import admin
 from notifications.models import Notification
 
 class NotificationAdmin(admin.ModelAdmin):
-    pass
+    raw_id_fields = ('recipient',)
 
 admin.site.register(Notification, NotificationAdmin)
