@@ -1,5 +1,6 @@
 # Create your views here.
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_http_methods as allow
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import get_object_or_404, render, redirect
@@ -46,6 +47,7 @@ def mark_all_as_read(request):
     return redirect('notifications:all')
 
 @login_required
+@allow(["POST"])
 def mark_as_read(request, slug=None):
     id = slug2id(slug)
 
