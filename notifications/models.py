@@ -1,21 +1,24 @@
 import datetime
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, AnonymousUser
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.db import models
-from django.utils.timezone import utc
-from .utils import id2slug
 
-from notifications.signals import notify
+import pytz
 
 from model_utils import managers, Choices
+
+from notifications.signals import notify
+from notifications.utils import id2slug
 
 try:
     from django.utils import timezone
     now = timezone.now
+    utc = timezone.utc
 except ImportError:
     now = datetime.datetime.now
+    utc = pytz.utc
 
 class NotificationQuerySet(models.query.QuerySet):
     
@@ -193,3 +196,8 @@ def notify_handler(verb, **kwargs):
 
 # connect the signal
 notify.connect(notify_handler, dispatch_uid='notifications.models.notification')
+
+# Make it so we don't have to keep testing is_anonymous on user.
+# Cannot use Notification.objects.none(), as that is an EmptyQuerySet, and
+# will not have .unread() on it!
+AnonymousUser.notifications = Notification.objects.filter(pk=None)
