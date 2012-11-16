@@ -1,7 +1,7 @@
 {% load url from future %}
-<div class="alert alert-block alert-{{ notice.level }}">
+<div class="alert alert-block alert-{{ notice.level }} notification">
   <a class="close pull-right" href="{% url 'notifications:mark_as_read' notice.slug %}">
-    <i class="icon-close"></i>
+    <i class="icon-remove"></i>
   </a>
   
   <h4>
@@ -19,7 +19,10 @@
   
   <div class="notice-actions">
     {% for action in notice.data.actions %}
-      <a class="btn" href="{{ action.href }}">{{ action.title }}</a>
+      <a class="btn btn-{% firstof action.level notice.level %}" href="{{ action.href }}">
+        {% if action.icon %}<i class="icon-{{ action.icon }}"></i>{% endif %}
+        {{ action.title }}
+      </a>
     {% endfor %}
   </div>
 </div>
