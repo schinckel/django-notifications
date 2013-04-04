@@ -1,4 +1,15 @@
+{% load url from future %}
 <ul class="notifications">
+  {% if notifications %}
+    <li class="alert alert-block">
+      <a class="btn btn-warning mark-all-as-read" href="{% url 'notifications:mark_all_as_read' %}">
+        Mark all as read
+      </a>
+      <span class="label">
+        Unless action required
+      </span>
+    </li>
+  {% endif %}
   {% for notice in notifications %}
     {% include 'notifications/notice.html' %}
   {% endfor %}

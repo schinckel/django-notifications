@@ -1,11 +1,11 @@
 {% load url from future %}
-<div class="alert alert-block alert-{{ notice.level }} notification">
+<li class="alert alert-block alert-{{ notice.level }} notification">
   <a class="close pull-right" href="{% url 'notifications:mark_as_read' notice.slug %}">
     <i class="icon-remove"></i>
   </a>
   
   <h4>
-    <i class="icon-mail{% if notice.unread %}-alt{% endif %}"></i>
+    <i class="icon-pushpin"></i>
     {{ notice.actor }} 
     {{ notice.verb }}
     {% if notice.target %}
@@ -15,7 +15,9 @@
   
   <p>{{ notice.timesince }} ago</p>
   
-  <p>{{ notice.description|linebreaksbr }}</p>
+  {% if notice.description %}
+    <p>{{ notice.description|linebreaksbr }}</p>
+  {% endif %}
   
   <div class="notice-actions">
     {% for action in notice.data.actions %}
@@ -25,4 +27,4 @@
       </a>
     {% endfor %}
   </div>
-</div>
+</li>
