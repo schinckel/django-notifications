@@ -7,6 +7,7 @@ from django.db import models
 
 import pytz
 
+from jsonfield.fields import JSONField
 from model_utils import managers, Choices
 
 from notifications.signals import notify
@@ -114,6 +115,8 @@ class Notification(models.Model):
 
     public = models.BooleanField(default=True)
     
+    data = JSONField(blank=True, null=True)
+    
     objects = managers.PassThroughManager.for_queryset_class(NotificationQuerySet)()
 
     class Meta:
@@ -152,16 +155,6 @@ class Notification(models.Model):
             self.unread = False
             self.save()
 
-EXTRA_DATA = False
-if getattr(settings, 'NOTIFY_USE_JSONFIELD', False):
-    try:
-        from jsonfield.fields import JSONField
-    except ImportError:
-        raise ImproperlyConfigured("You must have a suitable JSONField installed")
-    
-    JSONField(blank=True, null=True).contribute_to_class(Notification, 'data')
-    EXTRA_DATA = True
-
 
 def notify_handler(verb, **kwargs):
     """
@@ -169,29 +162,32 @@ def notify_handler(verb, **kwargs):
     """
 
     kwargs.pop('signal', None)
-    recipient = kwargs.pop('recipient')
+    recipients = kwargs.pop('recipients')
     actor = kwargs.pop('sender')
-    newnotify = Notification(
-        recipient = recipient,
-        actor_content_type=ContentType.objects.get_for_model(actor),
-        actor_object_id=actor.pk,
-        verb=unicode(verb),
-        public=bool(kwargs.pop('public', True)),
-        description=kwargs.pop('description', None),
-        timestamp=kwargs.pop('timestamp', datetime.datetime.utcnow().replace(tzinfo=utc))
-    )
-
-    for opt in ('target', 'action_object'):
-        obj = kwargs.pop(opt, None)
-        if not obj is None:
-            setattr(newnotify, '%s_object_id' % opt, obj.pk)
-            setattr(newnotify, '%s_content_type' % opt,
-                    ContentType.objects.get_for_model(obj))
     
-    if len(kwargs) and EXTRA_DATA:
-        newnotify.data = kwargs
+    # Can we optimise this? Do we need to?
+    for recipient in recipients:
+        newnotify = Notification(
+            recipient = recipient,
+            actor_content_type=ContentType.objects.get_for_model(actor),
+            actor_object_id=actor.pk,
+            verb=unicode(verb),
+            public=bool(kwargs.pop('public', True)),
+            description=kwargs.pop('description', None),
+            timestamp=kwargs.pop('timestamp', datetime.datetime.utcnow().replace(tzinfo=utc))
+        )
 
-    newnotify.save()
+        for opt in ('target', 'action_object'):
+            obj = kwargs.pop(opt, None)
+            if not obj is None:
+                setattr(newnotify, '%s_object_id' % opt, obj.pk)
+                setattr(newnotify, '%s_content_type' % opt,
+                        ContentType.objects.get_for_model(obj))
+    
+        if len(kwargs):
+            newnotify.data = kwargs
+
+        newnotify.save()
 
 
 # connect the signal
